@@ -1,0 +1,25 @@
+---
+const { title = "모바일 청첩장", description = "초대합니다", url = "", ogImage = "/og.jpg" } = Astro.props;
+---
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{title}</title>
+    <meta name="description" content={description} />
+
+    <!-- Open Graph (카톡 미리보기) -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={title} />
+    <meta property="og:description" content={description} />
+    {url && <meta property="og:url" content={url} />}
+    <meta property="og:image" content={ogImage.startsWith("http") ? ogImage : `${url}${ogImage}`} />
+  </head>
+
+  <body class="bg-white text-zinc-900">
+    <main class="mx-auto max-w-[420px] px-5 py-10">
+      <slot />
+    </main>
+  </body>
+</html>

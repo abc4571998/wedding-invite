@@ -1,16 +1,20 @@
 ---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import Intro from "../components/Intro.astro";
+import Gallery from "../components/Gallery.astro";
 
+const SITE_URL = ""; // 배포 후: "https://ourname.com"
 ---
-
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<BaseLayout
+  title="OO ❤️ OO 결혼합니다"
+  description="소중한 분들을 초대합니다"
+  url={SITE_URL}
+  ogImage="/og.jpg"
+>
+  <Hero />
+  <div class="h-8"></div>
+  <Intro />
+  <div class="h-10"></div>
+  <Gallery />
+</BaseLayout>
