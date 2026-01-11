@@ -3,6 +3,7 @@ import BaseLayout from "../layouts/BaseLayout.astro";
 import Hero from "../components/Hero.astro";
 import Intro from "../components/Intro.astro";
 import Gallery from "../components/Gallery.astro";
+import WeddingInfo from "../components/weddingInfo.astro";
 
 const SITE_URL = "https://seungbin-seongae.com";
 ---
@@ -21,6 +22,9 @@ const SITE_URL = "https://seungbin-seongae.com";
 		</section>
 		<section class="mx-auto max-w-[420px] min-h-screen snap-start py-10">
 			<Gallery />
+		</section>
+		<section class="mx-auto max-w-[420px] h-dvh snap-start py-10">
+			<WeddingInfo />
 		</section>
 	</div>
 </BaseLayout>
