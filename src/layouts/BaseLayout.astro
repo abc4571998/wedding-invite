@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 
-const { title = "모바일 청첩장", description = "초대합니다", url = "", ogImage = "public/02.JPG" } = Astro.props;
+const { title = "박승빈 & 김성애 결혼합니다.", description = "", url = "", ogImage = "/02.JPG" } = Astro.props;
 ---
 <!doctype html>
 <html lang="ko">
@@ -17,10 +17,16 @@ const { title = "모바일 청첩장", description = "초대합니다", url = ""
     <meta property="og:description" content={description} />
     {url && <meta property="og:url" content={url} />}
     <meta property="og:image" content={ogImage.startsWith("http") ? ogImage : `${url}${ogImage}`} />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+    href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap"
+    rel="stylesheet"
+    />
   </head>
 
-  <body class="bg-white text-zinc-900">
-    <main class="mx-auto max-w-[420px] px-5 py-10">
+  <body class="bg-white text-zinc-900 font-gowun h-dvh overflow-hidden">
+    <main class="mx-auto max-w-[420px] px-5 h-dvh overflow-hidden">
       <slot />
     </main>
   </body>

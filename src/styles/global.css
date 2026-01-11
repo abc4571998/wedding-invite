@@ -1,1 +1,33 @@
+@import url('//fonts.googleapis.com/earlyaccess/nanummyeongjo.css');
 @import "tailwindcss";
+
+
+@font-face {
+  font-family: 'GowoonDodum';
+  src: url('https://cdn.jsdelivr.net/gh/projectnoonnu/noonfonts_2108@1.1/GowunDodum-Regular.woff')
+    format('woff');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+.font-gowoon {
+  font-family: 'GowoonDodum', system-ui, sans-serif;
+}
+
+.font-nanum {
+  font-family: 'Nanum Myeongjo', serif;
+}
+
+.snap-container { 
+    -webkit-overflow-scrolling: touch; 
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+
+.hide-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge legacy */
+  scrollbar-width: none;    /* Firefox */
+}
