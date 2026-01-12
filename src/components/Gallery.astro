@@ -1,14 +1,15 @@
 ---
 const photos = [
-  "/photos/01.JPG",
-  "/photos/02.JPG",
-  "/photos/03.JPG",
-  "/photos/04.JPG",
-  "/photos/05.JPG",
-  "/photos/06.JPG",
-  "/photos/07.JPG",
-  "/photos/08.JPG",
-  "/photos/09.JPG",
+  "/photos/photo5.jpeg",
+  "/photos/photo8.jpeg",
+  "/photos/photo6.jpeg",   
+  "/photos/photo3.jpeg",
+  "/photos/photo1.jpeg",
+  "/photos/photo7.jpeg",
+  "/photos/photo4.jpeg",
+  "/photos/photo10.jpeg",
+  "/photos/photo2.jpeg",
+  "/photos/photo9.jpeg",
 ];
 ---
 
@@ -42,125 +43,244 @@ const photos = [
   <!-- 라이트박스(풀스크린) -->
   <div
     id="lightbox"
-    class="fixed inset-0 z-50 hidden items-center justify-center bg-black/90"
-    aria-hidden="true"
-  >
+    class="fixed inset-0 z-50 hidden bg-black/90"
+    aria-hidden="true">
+    <!-- 닫기 -->
     <button
-      id="lbClose"
-      type="button"
-      class="absolute right-4 top-4 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur hover:bg-white/20"
-    >
-      X
+    id="lbClose"
+    type="button"
+    class="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center text-white cursor-pointer"
+    aria-label="닫기">
+    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+        <path d="M6 6l12 12M18 6L6 18" />
+    </svg>
     </button>
 
-    <button
-      id="lbPrev"
-      type="button"
-      class="absolute left-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur hover:bg-white/20"
-      aria-label="이전 사진"
-    >
-      ‹
-    </button>
+    <!-- 내용 레이아웃(위: 큰 사진, 아래: 썸네일) -->
+    <div class="h-dvh w-full flex flex-col px-4 pt-14 pb-4">
+       <!-- 큰 사진 영역(버튼이 '사진' 기준으로 위치) -->
+        <div class="flex-1 flex items-center justify-center">
+            <div class="relative w-full max-w-[520px]">
+                <img
+                id="lbImg"
+                src=""
+                alt="selected photo"
+                class="mx-auto max-h-[70dvh] w-full rounded-2xl object-contain shadow-2xl"
+                />
 
-    <button
-      id="lbNext"
-      type="button"
-      class="absolute right-3 top-1/2 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white backdrop-blur hover:bg-white/20"
-      aria-label="다음 사진"
-    >
-      ›
-    </button>
+                <!-- Prev/Next: 사진 가운데 높이에 위치 -->
+                <button
+                id="lbPrev"
+                type="button"
+                class="absolute left-2 sm:-left-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur
+                        opacity-80 hover:opacity-100 transition cursor-pointer"
+                aria-label="이전 사진"
+                >
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M15 18l-6-6 6-6" />
+                </svg>
+                </button>
 
-    <div class="w-full px-4">
-      <img
-        id="lbImg"
-        src=""
-        alt="selected photo"
-        class="mx-auto max-h-[90dvh] max-w-full rounded-2xl object-contain shadow-2xl"
-      />
-      <p id="lbCount" class="mt-3 text-center text-xs text-white/70"></p>
+                <button
+                id="lbNext"
+                type="button"
+                class="absolute right-2 sm:-right-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur
+                        opacity-80 hover:opacity-100 transition cursor-pointer"
+                aria-label="다음 사진"
+                >
+                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 18l6-6-6-6" />
+                </svg>
+                </button>
+            </div>
+        </div>
+
+
+      <!-- 카운트 -->
+      <p id="lbCount" class="mt-2 text-center text-xs text-white/70"></p>
+
+      <!-- 썸네일 스트립 -->
+      <div class="mt-3">
+        <div class="mx-auto max-w-[520px] px-4">
+            <div
+                id="lbStrip"
+                class="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-smooth"
+            >
+                {photos.map((src, i) => (
+                <button
+                    type="button"
+                    class="lb-thumb shrink-0 rounded-lg overflow-hidden ring-2 ring-transparent"
+                    data-thumb-index={i}
+                    aria-label={`썸네일 ${i + 1}`}
+                >
+                    <img
+                    src={src}
+                    alt={`thumb ${i + 1}`}
+                    class="h-14 w-14 object-cover opacity-70"
+                    loading="lazy"
+                    decoding="async"
+                    />
+                </button>
+                ))}
+            </div>
+        </div>
+      </div>
     </div>
   </div>
 
+
   <!-- define:vars로 photos를 JS로 넘김 -->
   <script is:inline define:vars={{ photos }}>
-    const PHOTOS = photos;
+  const strip = document.getElementById("lbStrip");
+  const PHOTOS = photos;
 
-    const lb = document.getElementById("lightbox");
-    const lbImg = document.getElementById("lbImg");
-    const lbCount = document.getElementById("lbCount");
-    const btnClose = document.getElementById("lbClose");
-    const btnPrev = document.getElementById("lbPrev");
-    const btnNext = document.getElementById("lbNext");
+  const lb = document.getElementById("lightbox");
+  const lbImg = document.getElementById("lbImg");
+  const lbCount = document.getElementById("lbCount");
+  const btnClose = document.getElementById("lbClose");
+  const btnPrev = document.getElementById("lbPrev");
+  const btnNext = document.getElementById("lbNext");
 
-    let current = 0;
+  const thumbButtons = Array.from(document.querySelectorAll("[data-thumb-index]"));
 
-    function render() {
-      lbImg.src = PHOTOS[current];
-      lbCount.textContent = `${current + 1} / ${PHOTOS.length}`;
+  let current = 0;
+
+  function updateNavButtons() {
+    const atStart = current === 0;
+    const atEnd = current === PHOTOS.length - 1;
+
+    // 아예 숨기기
+    btnPrev.classList.toggle("hidden", atStart);
+    btnNext.classList.toggle("hidden", atEnd);
+  }
+
+    function highlightThumb() {
+    thumbButtons.forEach((btn) => {
+        const img = btn.querySelector("img");
+        btn.classList.remove("ring-white");
+        btn.classList.add("ring-transparent");
+        img.classList.remove("opacity-100");
+        img.classList.add("opacity-70");
+    });
+
+    const activeBtn = thumbButtons[current];
+    if (!activeBtn) return;
+
+    const activeImg = activeBtn.querySelector("img");
+    activeBtn.classList.remove("ring-transparent");
+    activeBtn.classList.add("ring-white");
+    activeImg.classList.remove("opacity-70");
+    activeImg.classList.add("opacity-100");
+
+    const max = strip.scrollWidth - strip.clientWidth;
+
+    // 첫/마지막은 확실히 끝까지 이동(아이폰 느낌)
+    if (current === 0) {
+        strip.scrollTo({ left: 0, behavior: "smooth" });
+        return;
     }
+    if (current === PHOTOS.length - 1) {
+        strip.scrollTo({ left: max, behavior: "smooth" });
+        return;
+    }
+
+    const target =
+    activeBtn.offsetLeft +
+    activeBtn.offsetWidth / 2 -
+    strip.clientWidth / 2;
+
+    const nextLeft = Math.max(0, Math.min(target, max));
+    strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+
+    }
+
+
+  function render() {
+    lbImg.src = PHOTOS[current];
+    lbCount.textContent = `${current + 1} / ${PHOTOS.length}`;
+    highlightThumb();
+    updateNavButtons();
+  }
 
     function openAt(index) {
-      current = index;
-      render();
-      lb.classList.remove("hidden");
-      lb.classList.add("flex");
-      lb.setAttribute("aria-hidden", "false");
-      document.body.style.overflow = "hidden";
-    }
+    current = index;
 
-    function close() {
-      lb.classList.add("hidden");
-      lb.classList.remove("flex");
-      lb.setAttribute("aria-hidden", "true");
-      lbImg.src = "";
-      document.body.style.overflow = "";
-    }
+    lb.classList.remove("hidden");
+    lb.classList.add("block");
+    lb.setAttribute("aria-hidden", "false");
+    document.body.style.overflow = "hidden";
 
-    function prev() {
-      current = (current - 1 + PHOTOS.length) % PHOTOS.length;
-      render();
-    }
-
-    function next() {
-      current = (current + 1) % PHOTOS.length;
-      render();
-    }
-
-    document.querySelectorAll('[data-lightbox="open"]').forEach((btn) => {
-      btn.addEventListener("click", () => openAt(Number(btn.dataset.index)));
+    requestAnimationFrame(() => {
+        render();
     });
+    }
 
-    btnClose.addEventListener("click", close);
-    btnPrev.addEventListener("click", prev);
-    btnNext.addEventListener("click", next);
+  function close() {
+    lb.classList.add("hidden");
+    lb.classList.remove("block");
+    lb.setAttribute("aria-hidden", "true");
+    lbImg.src = "";
+    document.body.style.overflow = "";
+  }
 
-    lb.addEventListener("click", (e) => {
-      if (e.target === lb) close();
+  function prev() {
+    if (current === 0) return;
+    current -= 1;
+    render();
+  }
+
+  function next() {
+    if (current === PHOTOS.length - 1) return;
+    current += 1;
+    render();
+  }
+
+  // 그리드 썸네일 클릭(오픈)
+  document.querySelectorAll('[data-lightbox="open"]').forEach((btn) => {
+    btn.addEventListener("click", () => openAt(Number(btn.dataset.index)));
+  });
+
+  // 하단 썸네일 스트립 클릭(이동)
+  thumbButtons.forEach((btn) => {
+    btn.addEventListener("click", () => {
+      current = Number(btn.dataset.thumbIndex);
+      render();
     });
+  });
 
-    window.addEventListener("keydown", (e) => {
-      if (lb.classList.contains("hidden")) return;
-      if (e.key === "Escape") close();
-      if (e.key === "ArrowLeft") prev();
-      if (e.key === "ArrowRight") next();
-    });
+  btnClose.addEventListener("click", close);
+  btnPrev.addEventListener("click", prev);
+  btnNext.addEventListener("click", next);
 
-    // 모바일 스와이프
-    let startX = null;
-    lb.addEventListener("touchstart", (e) => {
-      startX = e.touches[0].clientX;
-    }, { passive: true });
+  // 배경 클릭 닫기
+  lb.addEventListener("click", (e) => {
+    if (e.target === lb) close();
+  });
 
-    lb.addEventListener("touchend", (e) => {
-      if (startX === null) return;
-      const endX = e.changedTouches[0].clientX;
-      const dx = endX - startX;
-      startX = null;
+  // 키보드
+  window.addEventListener("keydown", (e) => {
+    if (lb.classList.contains("hidden")) return;
+    if (e.key === "Escape") close();
+    if (e.key === "ArrowLeft") prev();
+    if (e.key === "ArrowRight") next();
+  });
 
-      if (Math.abs(dx) < 40) return;
-      if (dx > 0) prev();
-      else next();
-    }, { passive: true });
-  </script>
+  // 모바일 스와이프
+  let startX = null;
+  lb.addEventListener("touchstart", (e) => {
+    startX = e.touches[0].clientX;
+  }, { passive: true });
+
+  lb.addEventListener("touchend", (e) => {
+    if (startX === null) return;
+    const endX = e.changedTouches[0].clientX;
+    const dx = endX - startX;
+    startX = null;
+
+    if (Math.abs(dx) < 40) return;
+    if (dx > 0) prev();
+    else next();
+  }, { passive: true });
+</script>
+
 </section>
