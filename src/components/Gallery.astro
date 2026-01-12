@@ -12,18 +12,18 @@ const photos = [
 ];
 ---
 
-<section class="h-full flex flex-col">
+<section class="min-h-screen flex flex-col">
   <div class="flex items-end justify-between">
     <h2 class="text-xl font-semibold text-zinc-900">사진</h2>
     <!-- <p class="text-xs text-zinc-500">사진을 누르면 크게 볼 수 있어요</p> -->
   </div>
 
   <!-- 정사각형 썸네일: 2열(더 큼) -->
-  <div class="mt-4 grid grid-cols-2 gap-3">
+  <div class="mt-4 grid grid-cols-2 gap-2">
     {photos.map((src, i) => (
       <button
         type="button"
-        class="group relative overflow-hidden rounded-2xl"
+        class="group relative overflow-hidden rounded-lg"
         data-lightbox="open"
         data-index={i}
         aria-label={`사진 크게 보기 ${i + 1}`}
@@ -50,7 +50,7 @@ const photos = [
       type="button"
       class="absolute right-4 top-4 rounded-full bg-white/10 px-4 py-2 text-sm text-white backdrop-blur hover:bg-white/20"
     >
-      닫기
+      X
     </button>
 
     <button
