@@ -31,3 +31,7 @@
   -ms-overflow-style: none; /* IE/Edge legacy */
   scrollbar-width: none;    /* Firefox */
 }
+
+.bg-beige {
+    background-color: #EFECDF;
+}
