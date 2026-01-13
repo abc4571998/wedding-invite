@@ -4,6 +4,7 @@ import Hero from "../components/Hero.astro";
 import Intro from "../components/Intro.astro";
 import Gallery from "../components/Gallery.astro";
 import WeddingInfo from "../components/weddingInfo.astro";
+import EndInfo from "../components/endInfo.astro";
 
 const SITE_URL = "https://seungbin-seongae.com";
 ---
@@ -17,14 +18,17 @@ const SITE_URL = "https://seungbin-seongae.com";
 		<section class="mx-auto max-w-[420px] h-dvh">
 			<Hero />
 		</section>
-		<section class="mx-auto max-w-[420px] min-h-screen pt-20 pb-10">
+		<section class="mx-auto max-w-[420px] min-h-screen pt-10 pb-10">
 			<Intro />
 		</section>
-		<section class="mx-auto max-w-[420px] min-h-screen py-20">
+		<section class="mx-auto max-w-[420px] min-h-screen py-5">
 			<Gallery />
 		</section>
-		<section class="mx-auto max-w-[420px] min-h-screen py-10">
+		<section class="mx-auto max-w-[420px] min-h-screen py-5">
 			<WeddingInfo />
+		</section>
+		<section class="mx-auto max-w-[420px] py-5">
+			<EndInfo />
 		</section>
 	</div>
 </BaseLayout>
