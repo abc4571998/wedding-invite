@@ -51,3 +51,11 @@
 .text-dark-brown {
     color: #55504a;
 }
+
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar {
+  -ms-overflow-style: none; /* IE/Edge legacy */
+  scrollbar-width: none;    /* Firefox */
+}
