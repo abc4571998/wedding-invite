@@ -42,12 +42,15 @@ const photos = [
   </div>
 
   <!-- 라이트박스(풀스크린) -->
-  <div id="lightbox" class="fixed inset-0 z-50 hidden bg-black/90" aria-hidden="true">
+  <div id="lightbox" class="fixed inset-0 z-50 hidden" aria-hidden="true">
+    <!-- 검은 배경 -->
+    <div class="absolute inset-0 bg-black/90"></div>
+
     <!-- 닫기 -->
     <button
       id="lbClose"
       type="button"
-      class="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center text-white cursor-pointer"
+      class="absolute right-4 top-4 z-20 grid h-9 w-9 place-items-center text-white cursor-pointer"
       aria-label="닫기"
     >
       <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
@@ -55,13 +58,14 @@ const photos = [
       </svg>
     </button>
 
-    <div class="h-dvh w-full flex flex-col px-4 pt-14 pb-4">
+    <div class="relative z-10 h-dvh w-full flex flex-col px-4 pt-14 pb-4">
       <!-- 큰 사진 -->
       <div class="flex-1 flex items-center justify-center">
         <div class="relative w-full max-w-[520px]">
           <div
             id="lbViewport"
-            class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center">
+            class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center"
+          >
             <img
               id="lbImg"
               src=""
@@ -154,27 +158,21 @@ const photos = [
       return window.visualViewport?.scale || 1;
     }
     function isPageZoomed() {
-      return pageScale() > 1.01; // 약간의 오차 방지
+      return pageScale() > 1.01;
     }
 
     function syncInteractionMode() {
       if (isPageZoomed()) {
-        // ✅ 페이지가 확대된 상태면: 브라우저 핀치 줌(줌아웃) 우선
-        viewport.style.touchAction = "auto"; // 브라우저 제스처 허용
-        // 커스텀 제스처 상태 강제 종료
+        viewport.style.touchAction = "auto";
         pointers.clear();
         isPinching = false;
         isPanning = false;
         multiTouch = false;
-        // 여기서 굳이 resetZoom()까지 할 필요는 없지만, 원하면 켜도 됨:
-        // resetZoom();
       } else {
-        // ✅ 정상(1배)일 때: 커스텀 이미지 줌/팬 사용
-        viewport.style.touchAction = "none"; // 커스텀 핸들러가 제스처 담당
+        viewport.style.touchAction = "none";
       }
     }
 
-    // 팝업 열릴 때/화면 스케일 변할 때 모드 갱신
     if (window.visualViewport) {
       window.visualViewport.addEventListener("resize", () => {
         if (!lb.classList.contains("hidden")) syncInteractionMode();
@@ -191,7 +189,6 @@ const photos = [
     let baseW = 0;
     let baseH = 0;
 
-    // scale은 "이미지 크기(width/height)"로만 반영 (transform scale 사용 X)
     let scale = 1;
     let tx = 0;
     let ty = 0;
@@ -202,7 +199,6 @@ const photos = [
     let isPanning = false;
     let isPinching = false;
 
-    // pointer tracking
     const pointers = new Map(); // id -> {x,y}
     let startDist = 0;
     let startScale = 1;
@@ -210,15 +206,12 @@ const photos = [
     let startTy = 0;
     let startMid = { x: 0, y: 0 };
 
-    // swipe guard
     let multiTouch = false;
     let startX = null;
 
-    // double tap guard
     let lastTap = 0;
     let justZoomed = false;
 
-    // pinch cooldown
     let pinchCooldownUntil = 0;
     function markPinchCooldown(ms = 900) {
       pinchCooldownUntil = Date.now() + ms;
@@ -228,7 +221,6 @@ const photos = [
       return Math.max(a, Math.min(b, n));
     }
 
-    // ✅ transform은 "이동"만 담당 (scale X)
     function applyTransform(withTransition = true) {
       lbImg.style.transition = withTransition ? "transform 120ms ease" : "none";
       lbImg.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
@@ -279,7 +271,6 @@ const photos = [
       applyTransform(true);
     }
 
-    // ===== Thumbs =====
     function updateNavButtons() {
       btnPrev.classList.toggle("hidden", current === 0);
       btnNext.classList.toggle("hidden", current === PHOTOS.length - 1);
@@ -342,7 +333,6 @@ const photos = [
       lb.setAttribute("aria-hidden", "false");
       document.body.style.overflow = "hidden";
 
-      // ✅ 팝업 열릴 때 현재 페이지 줌 상태 반영
       syncInteractionMode();
 
       render();
@@ -385,8 +375,14 @@ const photos = [
     btnPrev.addEventListener("click", (e) => { e.stopPropagation(); prev(); });
     btnNext.addEventListener("click", (e) => { e.stopPropagation(); next(); });
 
+    // ✅ 핵심: “검은 영역” 클릭 닫기 (사진/버튼/썸네일 영역이 아니면 닫기)
     lb.addEventListener("click", (e) => {
-      if (e.target === lb) close();
+      if (lb.classList.contains("hidden")) return;
+
+      const keepOpen = e.target.closest(
+        "#lbViewport, #lbPrev, #lbNext, #lbClose, #lbStrip, [data-thumb-index]"
+      );
+      if (!keepOpen) close();
     });
 
     window.addEventListener("keydown", (e) => {
@@ -398,7 +394,6 @@ const photos = [
 
     // ===== Double click (PC) =====
     viewport.addEventListener("dblclick", (e) => {
-      // ✅ 페이지가 확대 상태면(브라우저 줌아웃 필요) 커스텀 줌 토글 막기
       if (isPageZoomed()) return;
       e.preventDefault();
       toggleZoom();
@@ -408,7 +403,6 @@ const photos = [
     viewport.addEventListener(
       "touchend",
       (e) => {
-        // ✅ 페이지가 확대 상태면: 브라우저 줌아웃을 방해하지 않음 (preventDefault X)
         if (isPageZoomed()) return;
 
         if (Date.now() < pinchCooldownUntil || isPinching || multiTouch) {
@@ -416,7 +410,6 @@ const photos = [
           return;
         }
 
-        // iOS/카톡 인앱: 기본 페이지 줌 방지(정상 1배일 때만)
         e.preventDefault();
 
         const now = Date.now();
@@ -445,7 +438,6 @@ const photos = [
     }
 
     viewport.addEventListener("pointerdown", (e) => {
-      // ✅ 페이지가 확대 상태면: 브라우저 핀치(줌아웃) 우선, 커스텀 제스처 시작 안 함
       if (isPageZoomed()) return;
 
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
