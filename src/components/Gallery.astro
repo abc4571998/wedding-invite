@@ -62,12 +62,18 @@ const photos = [
        <!-- 큰 사진 영역(버튼이 '사진' 기준으로 위치) -->
         <div class="flex-1 flex items-center justify-center">
             <div class="relative w-full max-w-[520px]">
+              <div
+                id="lbViewport"
+                class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center touch-none"
+              >
                 <img
-                id="lbImg"
-                src=""
-                alt="selected photo"
-                class="mx-auto max-h-[70dvh] w-full rounded-2xl object-contain shadow-2xl"
+                  id="lbImg"
+                  src=""
+                  alt="selected photo"
+                  class="max-h-full max-w-full object-contain select-none"
+                  draggable="false"
                 />
+              </div>
 
                 <!-- Prev/Next: 사진 가운데 높이에 위치 -->
                 <button
@@ -132,36 +138,105 @@ const photos = [
 
   <!-- define:vars로 photos를 JS로 넘김 -->
   <script is:inline define:vars={{ photos }}>
-  const strip = document.getElementById("lbStrip");
   const PHOTOS = photos;
 
   const lb = document.getElementById("lightbox");
   const lbImg = document.getElementById("lbImg");
   const lbCount = document.getElementById("lbCount");
+  const strip = document.getElementById("lbStrip");
+
   const btnClose = document.getElementById("lbClose");
   const btnPrev = document.getElementById("lbPrev");
   const btnNext = document.getElementById("lbNext");
 
+  const viewport = document.getElementById("lbViewport");
   const thumbButtons = Array.from(document.querySelectorAll("[data-thumb-index]"));
 
   let current = 0;
 
-  function updateNavButtons() {
-    const atStart = current === 0;
-    const atEnd = current === PHOTOS.length - 1;
+  // ===== Zoom/Pan state =====
+  let scale = 1;
+  let tx = 0;
+  let ty = 0;
 
-    // 아예 숨기기
-    btnPrev.classList.toggle("hidden", atStart);
-    btnNext.classList.toggle("hidden", atEnd);
+  const MIN_SCALE = 1;
+  const MAX_SCALE = 4;
+
+  let isPanning = false;
+  let isPinching = false;
+
+  // pointer tracking (for pinch)
+  const pointers = new Map(); // id -> {x,y}
+  let startDist = 0;
+  let startScale = 1;
+  let startTx = 0;
+  let startTy = 0;
+  let startMid = { x: 0, y: 0 };
+
+  // swipe guard
+  let multiTouch = false;
+  let startX = null;
+
+  // double tap guard
+  let lastTap = 0;
+  let justZoomed = false;
+
+  function clamp(n, a, b) {
+    return Math.max(a, Math.min(b, n));
   }
 
-    function highlightThumb() {
+  function applyTransform(withTransition = true) {
+    lbImg.style.transformOrigin = "center center";
+    lbImg.style.transition = withTransition ? "transform 120ms ease" : "none";
+    lbImg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+  }
+
+  function clampPan() {
+    // viewport 기준으로 사진 이동 한계를 대략적으로 제한
+    const vw = viewport.clientWidth;
+    const vh = viewport.clientHeight;
+
+    const maxX = (vw * (scale - 1)) / 2;
+    const maxY = (vh * (scale - 1)) / 2;
+
+    tx = clamp(tx, -maxX, maxX);
+    ty = clamp(ty, -maxY, maxY);
+  }
+
+  function resetZoom() {
+    scale = 1;
+    tx = 0;
+    ty = 0;
+    applyTransform(true);
+  }
+
+  function toggleZoom() {
+    if (scale === 1) {
+      scale = 2;
+    } else {
+      scale = 1;
+      tx = 0;
+      ty = 0;
+    }
+    clampPan();
+    applyTransform(true);
+  }
+
+  // ===== Thumbs =====
+  function updateNavButtons() {
+    btnPrev.classList.toggle("hidden", current === 0);
+    btnNext.classList.toggle("hidden", current === PHOTOS.length - 1);
+  }
+
+  function highlightThumb() {
+    if (!strip) return;
+
     thumbButtons.forEach((btn) => {
-        const img = btn.querySelector("img");
-        btn.classList.remove("ring-white");
-        btn.classList.add("ring-transparent");
-        img.classList.remove("opacity-100");
-        img.classList.add("opacity-70");
+      const img = btn.querySelector("img");
+      btn.classList.remove("ring-white");
+      btn.classList.add("ring-transparent");
+      img.classList.remove("opacity-100");
+      img.classList.add("opacity-70");
     });
 
     const activeBtn = thumbButtons[current];
@@ -173,37 +248,33 @@ const photos = [
     activeImg.classList.remove("opacity-70");
     activeImg.classList.add("opacity-100");
 
-    const max = strip.scrollWidth - strip.clientWidth;
+    const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
 
-    // 첫/마지막은 확실히 끝까지 이동(아이폰 느낌)
     if (current === 0) {
-        strip.scrollTo({ left: 0, behavior: "smooth" });
-        return;
+      strip.scrollTo({ left: 0, behavior: "smooth" });
+      return;
     }
     if (current === PHOTOS.length - 1) {
-        strip.scrollTo({ left: max, behavior: "smooth" });
-        return;
+      strip.scrollTo({ left: max, behavior: "smooth" });
+      return;
     }
 
     const target =
-    activeBtn.offsetLeft +
-    activeBtn.offsetWidth / 2 -
-    strip.clientWidth / 2;
+      activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
 
-    const nextLeft = Math.max(0, Math.min(target, max));
+    const nextLeft = clamp(target, 0, max);
     strip.scrollTo({ left: nextLeft, behavior: "smooth" });
-
-    }
-
+  }
 
   function render() {
+    resetZoom();
     lbImg.src = PHOTOS[current];
     lbCount.textContent = `${current + 1} / ${PHOTOS.length}`;
     highlightThumb();
     updateNavButtons();
   }
 
-    function openAt(index) {
+  function openAt(index) {
     current = index;
 
     lb.classList.remove("hidden");
@@ -211,10 +282,9 @@ const photos = [
     lb.setAttribute("aria-hidden", "false");
     document.body.style.overflow = "hidden";
 
-    requestAnimationFrame(() => {
-        render();
-    });
-    }
+    render();
+    setTimeout(render, 0); // layout 안정화
+  }
 
   function close() {
     lb.classList.add("hidden");
@@ -222,6 +292,7 @@ const photos = [
     lb.setAttribute("aria-hidden", "true");
     lbImg.src = "";
     document.body.style.overflow = "";
+    resetZoom();
   }
 
   function prev() {
@@ -236,12 +307,11 @@ const photos = [
     render();
   }
 
-  // 그리드 썸네일 클릭(오픈)
+  // ===== Open handlers =====
   document.querySelectorAll('[data-lightbox="open"]').forEach((btn) => {
     btn.addEventListener("click", () => openAt(Number(btn.dataset.index)));
   });
 
-  // 하단 썸네일 스트립 클릭(이동)
   thumbButtons.forEach((btn) => {
     btn.addEventListener("click", () => {
       current = Number(btn.dataset.thumbIndex);
@@ -249,16 +319,15 @@ const photos = [
     });
   });
 
-  btnClose.addEventListener("click", close);
-  btnPrev.addEventListener("click", prev);
-  btnNext.addEventListener("click", next);
+  // stopPropagation important
+  btnClose.addEventListener("click", (e) => { e.stopPropagation(); close(); });
+  btnPrev.addEventListener("click", (e) => { e.stopPropagation(); prev(); });
+  btnNext.addEventListener("click", (e) => { e.stopPropagation(); next(); });
 
-  // 배경 클릭 닫기
   lb.addEventListener("click", (e) => {
     if (e.target === lb) close();
   });
 
-  // 키보드
   window.addEventListener("keydown", (e) => {
     if (lb.classList.contains("hidden")) return;
     if (e.key === "Escape") close();
@@ -266,14 +335,161 @@ const photos = [
     if (e.key === "ArrowRight") next();
   });
 
-  // 모바일 스와이프
-  let startX = null;
+  // ===== Double click (PC) =====
+  viewport.addEventListener("dblclick", (e) => {
+    e.preventDefault();
+    toggleZoom();
+  });
+
+  // ===== Double tap (mobile) =====
+  viewport.addEventListener(
+    "touchend",
+    (e) => {
+      // iOS/카톡 인앱: 기본 페이지 줌 방지
+      e.preventDefault();
+
+      const now = Date.now();
+      if (now - lastTap < 280) {
+        toggleZoom();
+        lastTap = 0;
+
+        justZoomed = true;
+        setTimeout(() => (justZoomed = false), 250);
+      } else {
+        lastTap = now;
+      }
+    },
+    { passive: false }
+  );
+
+  // ===== Pointer events for pan + pinch =====
+  function getDistance(a, b) {
+    const dx = a.x - b.x;
+    const dy = a.y - b.y;
+    return Math.hypot(dx, dy);
+  }
+
+  function getMid(a, b) {
+    return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
+  }
+
+  viewport.addEventListener("pointerdown", (e) => {
+    // lightbox 내에서만 처리
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+    viewport.setPointerCapture?.(e.pointerId);
+
+    if (pointers.size === 2) {
+      // pinch start
+      isPinching = true;
+      isPanning = false;
+
+      const pts = Array.from(pointers.values());
+      startDist = getDistance(pts[0], pts[1]);
+      startScale = scale;
+
+      startTx = tx;
+      startTy = ty;
+
+      startMid = getMid(pts[0], pts[1]);
+
+      // pinch 시작 시 스와이프 막기
+      multiTouch = true;
+      startX = null;
+      return;
+    }
+
+    // one finger/mouse pan only when zoomed
+    if (scale > 1) {
+      isPanning = true;
+      isPinching = false;
+
+      startTx = tx;
+      startTy = ty;
+      startMid = { x: e.clientX, y: e.clientY };
+    }
+  });
+
+  viewport.addEventListener("pointermove", (e) => {
+    if (!pointers.has(e.pointerId)) return;
+    pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
+
+    if (isPinching && pointers.size === 2) {
+      const pts = Array.from(pointers.values());
+      const dist = getDistance(pts[0], pts[1]);
+
+      const mid = getMid(pts[0], pts[1]);
+
+      // scale 계산
+      let nextScale = startScale * (dist / startDist);
+      nextScale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
+
+      // midpoint 기준으로 줌되게 보정
+      // (현재 mid가 startMid에서 이동한 만큼 translate도 같이 이동)
+      const dxMid = mid.x - startMid.x;
+      const dyMid = mid.y - startMid.y;
+
+      // scale 변화량에 비례해 이동 보정(아이폰 느낌)
+      const sRatio = nextScale / startScale;
+
+      tx = startTx + dxMid + (startTx) * (sRatio - 1);
+      ty = startTy + dyMid + (startTy) * (sRatio - 1);
+
+      scale = nextScale;
+      clampPan();
+      applyTransform(false);
+      return;
+    }
+
+    if (isPanning && pointers.size === 1 && scale > 1) {
+      const p = pointers.get(e.pointerId);
+      const dx = p.x - startMid.x;
+      const dy = p.y - startMid.y;
+
+      tx = startTx + dx;
+      ty = startTy + dy;
+
+      clampPan();
+      applyTransform(false);
+    }
+  });
+
+  function endPointer(e) {
+    pointers.delete(e.pointerId);
+
+    if (pointers.size < 2) {
+      isPinching = false;
+    }
+    if (pointers.size === 0) {
+      isPanning = false;
+      applyTransform(true);
+      multiTouch = false;
+    }
+  }
+
+  viewport.addEventListener("pointerup", endPointer);
+  viewport.addEventListener("pointercancel", endPointer);
+
+  // ===== Swipe (mobile) for next/prev - ONLY when not zoomed =====
   lb.addEventListener("touchstart", (e) => {
+    if (e.touches.length > 1) {
+      multiTouch = true;
+      startX = null;
+      return;
+    }
+    multiTouch = false;
+
+    if (scale > 1) { startX = null; return; }
     startX = e.touches[0].clientX;
   }, { passive: true });
 
   lb.addEventListener("touchend", (e) => {
+    if (justZoomed) { startX = null; return; }
+    if (isPanning || isPinching) { startX = null; return; }
+    if (multiTouch) { multiTouch = false; startX = null; return; }
     if (startX === null) return;
+
+    if (scale > 1) { startX = null; return; }
+
     const endX = e.changedTouches[0].clientX;
     const dx = endX - startX;
     startX = null;
