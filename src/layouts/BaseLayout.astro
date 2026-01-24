@@ -1,7 +1,7 @@
 ---
 import "../styles/global.css";
 
-const { title = "박승빈 & 김성애 결혼합니다.", description = "", url = "", ogImage = "/02.JPG" } = Astro.props;
+const { title = "박승빈 & 김성애 결혼합니다", description = "", url = "", ogImage = "/photo11.jpeg" } = Astro.props;
 ---
 <!doctype html>
 <html lang="ko">
@@ -23,7 +23,7 @@ const { title = "박승빈 & 김성애 결혼합니다.", description = "", url 
     {url && <meta property="og:url" content={url} />}
     <meta property="og:image" content={ogImage.startsWith("http") ? ogImage : `${url}${ogImage}`} />
 
-    <link rel="icon" type="image/png" href="/heart2.png" />
+    <link rel="icon" type="image/svg" href="/heart.svg" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
