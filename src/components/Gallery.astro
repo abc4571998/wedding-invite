@@ -20,6 +20,7 @@ const photos = [
     <h2 class="text-lg font-normal text-cartier font-gowoon tracking-[0.08em] mb-3">GALLERY</h2>
   </div>
 
+  <!-- 정사각형 썸네일: 2열 -->
   <div class="mt-4 grid grid-cols-2 gap-2">
     {photos.map((src, i) => (
       <button
@@ -40,7 +41,9 @@ const photos = [
     ))}
   </div>
 
+  <!-- 라이트박스(풀스크린) -->
   <div id="lightbox" class="fixed inset-0 z-50 hidden bg-black/90" aria-hidden="true">
+    <!-- 닫기 -->
     <button
       id="lbClose"
       type="button"
@@ -53,6 +56,7 @@ const photos = [
     </button>
 
     <div class="h-dvh w-full flex flex-col px-4 pt-14 pb-4">
+      <!-- 큰 사진 -->
       <div class="flex-1 flex items-center justify-center">
         <div class="relative w-full max-w-[520px]">
           <div
@@ -63,11 +67,12 @@ const photos = [
               id="lbImg"
               src=""
               alt="selected photo"
-              class="absolute left-1/2 top-1/2 select-none"
+              class="absolute left-1/2 top-1/2 select-none max-w-none max-h-none"
               draggable="false"
             />
           </div>
 
+          <!-- Prev/Next -->
           <button
             id="lbPrev"
             type="button"
@@ -94,6 +99,7 @@ const photos = [
 
       <p id="lbCount" class="mt-2 text-center text-xs text-white/70"></p>
 
+      <!-- 썸네일 스트립 -->
       <div class="mt-3">
         <div class="mx-auto max-w-[520px] px-4">
           <div id="lbStrip" class="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-smooth no-scrollbar">
@@ -135,34 +141,17 @@ const photos = [
     const viewport = document.getElementById("lbViewport");
     const thumbButtons = Array.from(document.querySelectorAll("[data-thumb-index]"));
 
-    // 성능/선명도 보정 (한 번만)
-    lbImg.style.willChange = "transform";
+    // 선명도 도움(렌더링 힌트)
+    lbImg.style.willChange = "transform, width, height";
     lbImg.style.transformOrigin = "center center";
-    lbImg.style.imageRendering = "auto";
 
     let current = 0;
 
-    // ===== base size (zoom=1에서의 "표시 크기") =====
+    // ===== Zoom/Pan state =====
     let baseW = 0;
     let baseH = 0;
 
-    function measureBase() {
-      const vw = viewport.clientWidth;
-      const vh = viewport.clientHeight;
-
-      const naturalW = lbImg.naturalWidth || 1;
-      const naturalH = lbImg.naturalHeight || 1;
-      const r = Math.min(vw / naturalW, vh / naturalH);
-
-      baseW = Math.round(naturalW * r);
-      baseH = Math.round(naturalH * r);
-
-      // ✅ base 크기로 고정 (여기서부터 확대는 transform scale만)
-      lbImg.style.width = baseW + "px";
-      lbImg.style.height = baseH + "px";
-    }
-
-    // ===== Zoom/Pan state =====
+    // scale은 "이미지 크기(width/height)"로만 반영 (transform scale 사용 X)
     let scale = 1;
     let tx = 0;
     let ty = 0;
@@ -173,15 +162,13 @@ const photos = [
     let isPanning = false;
     let isPinching = false;
 
+    // pointer tracking
     const pointers = new Map(); // id -> {x,y}
     let startDist = 0;
     let startScale = 1;
     let startTx = 0;
     let startTy = 0;
-
-    // pinch anchor (이미지 좌표 기준)
-    let pinchAnchorImgX = 0;
-    let pinchAnchorImgY = 0;
+    let startMid = { x: 0, y: 0 };
 
     // swipe guard
     let multiTouch = false;
@@ -201,18 +188,15 @@ const photos = [
       return Math.max(a, Math.min(b, n));
     }
 
+    // ✅ transform은 "이동"만 담당 (scale X)
     function applyTransform(withTransition = true) {
       lbImg.style.transition = withTransition ? "transform 120ms ease" : "none";
-      lbImg.style.transform =
-        `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale})`;
+      lbImg.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px))`;
     }
 
-    function clampPanByScale() {
+    function clampPanBySize(imgW, imgH) {
       const vw = viewport.clientWidth;
       const vh = viewport.clientHeight;
-
-      const imgW = baseW * scale;
-      const imgH = baseH * scale;
 
       const maxX = Math.max(0, (imgW - vw) / 2);
       const maxY = Math.max(0, (imgH - vh) / 2);
@@ -221,22 +205,37 @@ const photos = [
       ty = clamp(ty, -maxY, maxY);
     }
 
+    function setImageSizeByScale() {
+      const w = baseW * scale;
+      const h = baseH * scale;
+      lbImg.style.width = `${w}px`;
+      lbImg.style.height = `${h}px`;
+      clampPanBySize(w, h);
+    }
+
+    function measureBase() {
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+
+      const naturalW = lbImg.naturalWidth || 1;
+      const naturalH = lbImg.naturalHeight || 1;
+
+      const r = Math.min(vw / naturalW, vh / naturalH);
+      baseW = Math.round(naturalW * r);
+      baseH = Math.round(naturalH * r);
+    }
+
     function resetZoom() {
       scale = 1;
       tx = 0;
       ty = 0;
+      setImageSizeByScale();
       applyTransform(true);
     }
 
     function toggleZoom() {
-      if (scale === 1) {
-        scale = 2;
-      } else {
-        scale = 1;
-        tx = 0;
-        ty = 0;
-      }
-      clampPanByScale();
+      scale = (scale === 1) ? 2 : 1;
+      setImageSizeByScale();
       applyTransform(true);
     }
 
@@ -278,26 +277,19 @@ const photos = [
       }
 
       const target = activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
-      strip.scrollTo({ left: clamp(target, 0, max), behavior: "smooth" });
+      const nextLeft = clamp(target, 0, max);
+      strip.scrollTo({ left: nextLeft, behavior: "smooth" });
     }
 
     function render() {
-      // 사진 바뀔 때만 초기화
-      scale = 1;
-      tx = 0;
-      ty = 0;
-
-      // onload는 매번 새로 바인딩(이전 핸들러 덮어쓰기)
+      // 새 이미지 로드 후 base 측정 -> size 세팅 -> reset
       lbImg.onload = () => {
         measureBase();
         resetZoom();
       };
 
-      // ✅ 라이트박스는 원본을 그대로 쓰자 (선명도)
-      lbImg.decoding = "async";
-      lbImg.loading = "eager";
-
       lbImg.src = PHOTOS[current];
+
       lbCount.textContent = `${current + 1} / ${PHOTOS.length}`;
       highlightThumb();
       updateNavButtons();
@@ -321,7 +313,7 @@ const photos = [
       lb.setAttribute("aria-hidden", "true");
       lbImg.src = "";
       document.body.style.overflow = "";
-      resetZoom();
+      // reset은 다음 open에서 처리
     }
 
     function prev() {
@@ -352,7 +344,9 @@ const photos = [
     btnPrev.addEventListener("click", (e) => { e.stopPropagation(); prev(); });
     btnNext.addEventListener("click", (e) => { e.stopPropagation(); next(); });
 
-    lb.addEventListener("click", (e) => { if (e.target === lb) close(); });
+    lb.addEventListener("click", (e) => {
+      if (e.target === lb) close();
+    });
 
     window.addEventListener("keydown", (e) => {
       if (lb.classList.contains("hidden")) return;
@@ -368,25 +362,30 @@ const photos = [
     });
 
     // ===== Double tap (mobile) =====
-    viewport.addEventListener("touchend", (e) => {
-      if (Date.now() < pinchCooldownUntil || isPinching || multiTouch) {
-        lastTap = 0;
-        return;
-      }
+    viewport.addEventListener(
+      "touchend",
+      (e) => {
+        if (Date.now() < pinchCooldownUntil || isPinching || multiTouch) {
+          lastTap = 0;
+          return;
+        }
 
-      e.preventDefault();
+        // iOS/카톡 인앱: 기본 페이지 줌 방지
+        e.preventDefault();
 
-      const now = Date.now();
-      if (now - lastTap < 280) {
-        toggleZoom();
-        lastTap = 0;
+        const now = Date.now();
+        if (now - lastTap < 280) {
+          toggleZoom();
+          lastTap = 0;
 
-        justZoomed = true;
-        setTimeout(() => (justZoomed = false), 250);
-      } else {
-        lastTap = now;
-      }
-    }, { passive: false });
+          justZoomed = true;
+          setTimeout(() => (justZoomed = false), 250);
+        } else {
+          lastTap = now;
+        }
+      },
+      { passive: false }
+    );
 
     // ===== Pointer events for pan + pinch =====
     function getDistance(a, b) {
@@ -399,14 +398,6 @@ const photos = [
       return { x: (a.x + b.x) / 2, y: (a.y + b.y) / 2 };
     }
 
-    // client 좌표 -> viewport 중심 기준 좌표
-    function toViewportCenterXY(clientX, clientY) {
-      const rect = viewport.getBoundingClientRect();
-      const x = clientX - rect.left - rect.width / 2;
-      const y = clientY - rect.top - rect.height / 2;
-      return { x, y };
-    }
-
     viewport.addEventListener("pointerdown", (e) => {
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
       viewport.setPointerCapture?.(e.pointerId);
@@ -414,38 +405,31 @@ const photos = [
       if (pointers.size === 2) {
         isPinching = true;
         isPanning = false;
+
         markPinchCooldown(900);
 
         const pts = Array.from(pointers.values());
         startDist = getDistance(pts[0], pts[1]);
         startScale = scale;
+
         startTx = tx;
         startTy = ty;
 
-        const mid = getMid(pts[0], pts[1]);
-        const v = toViewportCenterXY(mid.x, mid.y);
-
-        // ✅ “핀치 중심”이 가리키는 이미지 좌표를 저장 (이게 핵심)
-        pinchAnchorImgX = (v.x - startTx) / startScale;
-        pinchAnchorImgY = (v.y - startTy) / startScale;
+        startMid = getMid(pts[0], pts[1]);
 
         multiTouch = true;
         startX = null;
         return;
       }
 
+      // one pointer pan only when zoomed
       if (scale > 1) {
         isPanning = true;
         isPinching = false;
+
         startTx = tx;
         startTy = ty;
-        startDist = 0;
-        startScale = scale;
-
-        // pan 시작점
-        const p = pointers.get(e.pointerId);
-        e.__startPanX = p.x;
-        e.__startPanY = p.y;
+        startMid = { x: e.clientX, y: e.clientY };
       }
     });
 
@@ -461,36 +445,37 @@ const photos = [
         let nextScale = startScale * (dist / startDist);
         nextScale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
 
-        const v = toViewportCenterXY(mid.x, mid.y);
-
-        // ✅ 핀치 중심이 계속 같은 “이미지 지점”을 가리키게 tx/ty 재계산
+        // ✅ 크기는 width/height로 반영(선명)
         scale = nextScale;
-        tx = v.x - pinchAnchorImgX * scale;
-        ty = v.y - pinchAnchorImgY * scale;
+        setImageSizeByScale();
 
-        clampPanByScale();
+        // 중심 이동
+        const dxMid = mid.x - startMid.x;
+        const dyMid = mid.y - startMid.y;
+        tx = startTx + dxMid;
+        ty = startTy + dyMid;
+
+        // 새 크기에 맞춰 pan clamp
+        const w = baseW * scale;
+        const h = baseH * scale;
+        clampPanBySize(w, h);
+
         applyTransform(false);
         return;
       }
 
       if (isPanning && pointers.size === 1 && scale > 1) {
         const p = pointers.get(e.pointerId);
+        const dx = p.x - startMid.x;
+        const dy = p.y - startMid.y;
 
-        // 첫 프레임에서 시작점이 없으면 잡아주기
-        if (typeof viewport.__panStartX !== "number") {
-          viewport.__panStartX = p.x;
-          viewport.__panStartY = p.y;
-          viewport.__panTx = tx;
-          viewport.__panTy = ty;
-        }
+        tx = startTx + dx;
+        ty = startTy + dy;
 
-        const dx = p.x - viewport.__panStartX;
-        const dy = p.y - viewport.__panStartY;
+        const w = baseW * scale;
+        const h = baseH * scale;
+        clampPanBySize(w, h);
 
-        tx = viewport.__panTx + dx;
-        ty = viewport.__panTy + dy;
-
-        clampPanByScale();
         applyTransform(false);
       }
     });
@@ -502,18 +487,9 @@ const photos = [
         if (isPinching) markPinchCooldown(900);
         isPinching = false;
       }
-
       if (pointers.size === 0) {
         isPanning = false;
-        viewport.__panStartX = undefined;
-        viewport.__panStartY = undefined;
-        viewport.__panTx = undefined;
-        viewport.__panTy = undefined;
-
-        // 너무 작아졌으면 원복
-        if (scale <= 1.001) resetZoom();
-        else applyTransform(true);
-
+        applyTransform(true);
         multiTouch = false;
       }
     }
@@ -521,55 +497,52 @@ const photos = [
     viewport.addEventListener("pointerup", endPointer);
     viewport.addEventListener("pointercancel", endPointer);
 
-    // ===== Swipe (mobile) for next/prev - ONLY when not zoomed =====
-    lb.addEventListener("touchstart", (e) => {
-      // 썸네일 드래그는 next/prev 금지
-      if (e.target.closest("#lbStrip")) {
-        startX = null;
-        return;
-      }
+    // ===== Swipe (mobile) next/prev - ONLY when not zoomed =====
+    lb.addEventListener(
+      "touchstart",
+      (e) => {
+        // 썸네일 스트립에서 시작하면 스와이프(다음/이전) 금지
+        if (e.target.closest("#lbStrip")) {
+          startX = null;
+          return;
+        }
 
-      if (e.touches.length > 1) {
-        multiTouch = true;
-        startX = null;
-        return;
-      }
-
-      multiTouch = false;
-
-      if (scale > 1) {
-        startX = null;
-        return;
-      }
-
-      startX = e.touches[0].clientX;
-    }, { passive: true });
-
-    lb.addEventListener("touchend", (e) => {
-      if (e.target.closest("#lbStrip")) {
-        startX = null;
-        return;
-      }
-
-      if (justZoomed || isPanning || isPinching || multiTouch) {
-        startX = null;
+        if (e.touches.length > 1) {
+          multiTouch = true;
+          startX = null;
+          return;
+        }
         multiTouch = false;
-        return;
-      }
-      if (startX === null) return;
 
-      if (scale > 1) {
+        if (scale > 1) { startX = null; return; }
+        startX = e.touches[0].clientX;
+      },
+      { passive: true }
+    );
+
+    lb.addEventListener(
+      "touchend",
+      (e) => {
+        // 썸네일 스트립에서 끝나도 스와이프 금지
+        if (e.target.closest("#lbStrip")) {
+          startX = null;
+          return;
+        }
+
+        if (justZoomed || isPanning || isPinching) { startX = null; return; }
+        if (multiTouch) { multiTouch = false; startX = null; return; }
+        if (startX === null) return;
+        if (scale > 1) { startX = null; return; }
+
+        const endX = e.changedTouches[0].clientX;
+        const dx = endX - startX;
         startX = null;
-        return;
-      }
 
-      const endX = e.changedTouches[0].clientX;
-      const dx = endX - startX;
-      startX = null;
-
-      if (Math.abs(dx) < 40) return;
-      if (dx > 0) prev();
-      else next();
-    }, { passive: true });
+        if (Math.abs(dx) < 40) return;
+        if (dx > 0) prev();
+        else next();
+      },
+      { passive: true }
+    );
   </script>
 </section>
