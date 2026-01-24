@@ -59,3 +59,9 @@
   -ms-overflow-style: none; /* IE/Edge legacy */
   scrollbar-width: none;    /* Firefox */
 }
+
+img {
+  -webkit-touch-callout: none; /* iOS: 길게누르기 메뉴 */
+  -webkit-user-select: none;
+  user-select: none;
+}

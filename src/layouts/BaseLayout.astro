@@ -49,6 +49,26 @@ const { title = "박승빈 & 김성애 결혼합니다.", description = "", url 
       document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
       document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
     </script>
+    <script>
+      // 우클릭 막기
+      document.addEventListener("contextmenu", (e) => e.preventDefault());
+
+      // 주요 단축키 막기(우회 가능)
+      document.addEventListener("keydown", (e) => {
+        const key = e.key?.toLowerCase();
+
+        // F12
+        if (e.key === "F12") e.preventDefault();
+
+        // Ctrl+Shift+I / Ctrl+Shift+J / Ctrl+U
+        if (e.ctrlKey && e.shiftKey && (key === "i" || key === "j" || key === "c")) e.preventDefault();
+        if (e.ctrlKey && (key === "u" || key === "s")) e.preventDefault();
+
+        // Mac: Cmd+Opt+I / Cmd+Opt+J / Cmd+Opt+C
+        if (e.metaKey && e.altKey && (key === "i" || key === "j" || key === "c")) e.preventDefault();
+      });
+    </script>
+
   </head>
 
   <body class="bg-beige text-zinc-900 font-gowun h-dvh overflow-hidden">

@@ -61,13 +61,12 @@ const photos = [
         <div class="relative w-full max-w-[520px]">
           <div
             id="lbViewport"
-            class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center"
-            <!-- ✅ touch-none 제거! (브라우저 줌아웃을 막는 원인) -->
-          >
+            class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center">
             <img
               id="lbImg"
               src=""
               alt="selected photo"
+              oncontextmenu="return false"
               class="absolute left-1/2 top-1/2 select-none max-w-none max-h-none"
               draggable="false"
             />
@@ -145,6 +144,8 @@ const photos = [
     // 선명도 도움(렌더링 힌트)
     lbImg.style.willChange = "transform, width, height";
     lbImg.style.transformOrigin = "center center";
+    lbImg.addEventListener("contextmenu", (e) => e.preventDefault());
+    lbImg.setAttribute("draggable", "false");
 
     let current = 0;
 
