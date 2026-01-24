@@ -64,11 +64,11 @@ const photos = [
             id="lbViewport"
             class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center touch-none"
           >
-            <img
+           <img
               id="lbImg"
               src=""
               alt="selected photo"
-              class="max-h-full max-w-full object-contain select-none"
+              class="absolute left-1/2 top-1/2 select-none"
               draggable="false"
             />
           </div>
@@ -129,6 +129,8 @@ const photos = [
   </div>
 
   <script is:inline define:vars={{ photos }}>
+
+
     const PHOTOS = photos;
 
     const lb = document.getElementById("lightbox");
@@ -146,6 +148,31 @@ const photos = [
     let current = 0;
 
     // ===== Zoom/Pan state =====
+    let baseW = 0;
+    let baseH = 0;
+
+    lbImg.style.willChange = "transform";
+    lbImg.style.transformOrigin = "center center";
+    lbImg.style.imageRendering = "auto";
+
+    // 지금 이미지의 '기본(줌1)' 크기 측정
+    function measureBase() {
+      // 화면에 맞게 contain된 결과 크기를 기준으로 잡음
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+
+      // 자연비율로 contain 계산
+      const naturalW = lbImg.naturalWidth || 1;
+      const naturalH = lbImg.naturalHeight || 1;
+      const r = Math.min(vw / naturalW, vh / naturalH);
+
+      baseW = Math.round(naturalW * r);
+      baseH = Math.round(naturalH * r);
+
+      lbImg.style.width = `${baseW}px`;
+      lbImg.style.height = `${baseH}px`;
+    }
+
     let scale = 1;
     let tx = 0;
     let ty = 0;
@@ -183,9 +210,8 @@ const photos = [
     }
 
     function applyTransform(withTransition = true) {
-      lbImg.style.transformOrigin = "center center";
       lbImg.style.transition = withTransition ? "transform 120ms ease" : "none";
-      lbImg.style.transform = `translate(${tx}px, ${ty}px) scale(${scale})`;
+      lbImg.style.transform = `translate(calc(-50% + ${tx}px), calc(-50% + ${ty}px)) scale(${scale})`;
     }
 
     function clampPan() {
@@ -203,20 +229,30 @@ const photos = [
       scale = 1;
       tx = 0;
       ty = 0;
+
+      // base가 잡혀있을 때만
+      if (baseW && baseH) {
+        lbImg.style.width = `${baseW}px`;
+        lbImg.style.height = `${baseH}px`;
+      }
+
       applyTransform(true);
     }
 
+
     function toggleZoom() {
-      if (scale === 1) {
-        scale = 2;
-      } else {
-        scale = 1;
-        tx = 0;
-        ty = 0;
-      }
-      clampPan();
+      if (scale === 1) scale = 2;
+      else scale = 1;
+
+      const w = baseW * scale;
+      const h = baseH * scale;
+      lbImg.style.width = `${w}px`;
+      lbImg.style.height = `${h}px`;
+
+      clampPanBySize(w, h);
       applyTransform(true);
     }
+
 
     // ===== Thumbs =====
     function updateNavButtons() {
@@ -261,13 +297,18 @@ const photos = [
     }
 
     function render() {
-      // 사진 넘길 때만 줌 초기화(아이폰 느낌)
-      resetZoom();
+      lbImg.onload = () => {
+        measureBase();   // baseW/baseH 세팅 + width/height 지정
+        resetZoom();     // scale=1, tx=0,ty=0 + transform 반영
+      };
+
       lbImg.src = PHOTOS[current];
+
       lbCount.textContent = `${current + 1} / ${PHOTOS.length}`;
       highlightThumb();
       updateNavButtons();
     }
+
 
     function openAt(index) {
       current = index;
@@ -425,9 +466,6 @@ const photos = [
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (isPinching && pointers.size === 2) {
-        // ✅ 핀치 진행 중 계속 연장
-        markPinchCooldown(900);
-
         const pts = Array.from(pointers.values());
         const dist = getDistance(pts[0], pts[1]);
         const mid = getMid(pts[0], pts[1]);
@@ -435,16 +473,20 @@ const photos = [
         let nextScale = startScale * (dist / startDist);
         nextScale = clamp(nextScale, MIN_SCALE, MAX_SCALE);
 
+        // ✅ 실제 크기 확정: width/height로 반영
+        scale = nextScale;
+        const w = baseW * scale;
+        const h = baseH * scale;
+        lbImg.style.width = `${w}px`;
+        lbImg.style.height = `${h}px`;
+
+        // 이동(중심 이동)
         const dxMid = mid.x - startMid.x;
         const dyMid = mid.y - startMid.y;
+        tx = startTx + dxMid;
+        ty = startTy + dyMid;
 
-        const sRatio = nextScale / startScale;
-
-        tx = startTx + dxMid + startTx * (sRatio - 1);
-        ty = startTy + dyMid + startTy * (sRatio - 1);
-
-        scale = nextScale;
-        clampPan();
+        clampPanBySize(w, h);   // 아래 함수 추가
         applyTransform(false);
         return;
       }
@@ -457,10 +499,24 @@ const photos = [
         tx = startTx + dx;
         ty = startTy + dy;
 
-        clampPan();
+        const w = baseW * scale;
+        const h = baseH * scale;
+        clampPanBySize(w, h);
         applyTransform(false);
       }
     });
+
+    function clampPanBySize(imgW, imgH) {
+      const vw = viewport.clientWidth;
+      const vh = viewport.clientHeight;
+
+      const maxX = Math.max(0, (imgW - vw) / 2);
+      const maxY = Math.max(0, (imgH - vh) / 2);
+
+      tx = clamp(tx, -maxX, maxX);
+      ty = clamp(ty, -maxY, maxY);
+    }
+
 
     function endPointer(e) {
       pointers.delete(e.pointerId);
