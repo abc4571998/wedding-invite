@@ -7,7 +7,12 @@ const { title = "박승빈 & 김성애 결혼합니다.", description = "", url 
 <html lang="ko">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
+
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover"
+    />
+
     <title>{title}</title>
     <meta name="description" content={description} />
 
@@ -17,14 +22,33 @@ const { title = "박승빈 & 김성애 결혼합니다.", description = "", url 
     <meta property="og:description" content={description} />
     {url && <meta property="og:url" content={url} />}
     <meta property="og:image" content={ogImage.startsWith("http") ? ogImage : `${url}${ogImage}`} />
-    <link rel="icon" type="image/svg+xml" href="/heart.png" />
+
+    <link rel="icon" type="image/png" href="/heart2.png" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link
-    href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap"
-    rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Nanum+Myeongjo:wght@400;700&display=swap"
+      rel="stylesheet"
     />
-    <script src="https://t1.kakaocdn.net/kakao_js_sdk/2.7.2/kakao.min.js"></script>
+
+    <script is:inline>
+      // iOS: 더블탭 줌 방지
+      let lastTouchEnd = 0;
+      document.addEventListener(
+        "touchend",
+        (e) => {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) e.preventDefault();
+          lastTouchEnd = now;
+        },
+        { passive: false }
+      );
+
+      // iOS Safari: 핀치 제스처(gesture*) 이벤트 방지
+      document.addEventListener("gesturestart", (e) => e.preventDefault(), { passive: false });
+      document.addEventListener("gesturechange", (e) => e.preventDefault(), { passive: false });
+      document.addEventListener("gestureend", (e) => e.preventDefault(), { passive: false });
+    </script>
   </head>
 
   <body class="bg-beige text-zinc-900 font-gowun h-dvh overflow-hidden">
