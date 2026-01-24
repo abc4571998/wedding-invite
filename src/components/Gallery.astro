@@ -1,7 +1,7 @@
 ---
 const photos = [
   "/photos/photo5.jpg",
-  "/photos/02.jpg",   
+  "/photos/02.jpg",
   "/photos/03.jpg",
   "/photos/04.jpg",
   "/photos/07.jpg",
@@ -20,7 +20,7 @@ const photos = [
     <h2 class="text-lg font-normal text-cartier font-gowoon tracking-[0.08em] mb-3">GALLERY</h2>
   </div>
 
-  <!-- 정사각형 썸네일: 2열(더 큼) -->
+  <!-- 정사각형 썸네일: 2열 -->
   <div class="mt-4 grid grid-cols-2 gap-2">
     {photos.map((src, i) => (
       <button
@@ -42,66 +42,61 @@ const photos = [
   </div>
 
   <!-- 라이트박스(풀스크린) -->
-  <div
-    id="lightbox"
-    class="fixed inset-0 z-50 hidden bg-black/90"
-    aria-hidden="true">
+  <div id="lightbox" class="fixed inset-0 z-50 hidden bg-black/90" aria-hidden="true">
     <!-- 닫기 -->
     <button
-    id="lbClose"
-    type="button"
-    class="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center text-white cursor-pointer"
-    aria-label="닫기">
-    <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+      id="lbClose"
+      type="button"
+      class="absolute right-4 top-4 z-10 grid h-9 w-9 place-items-center text-white cursor-pointer"
+      aria-label="닫기"
+    >
+      <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
         <path d="M6 6l12 12M18 6L6 18" />
-    </svg>
+      </svg>
     </button>
 
     <!-- 내용 레이아웃(위: 큰 사진, 아래: 썸네일) -->
     <div class="h-dvh w-full flex flex-col px-4 pt-14 pb-4">
-       <!-- 큰 사진 영역(버튼이 '사진' 기준으로 위치) -->
-        <div class="flex-1 flex items-center justify-center">
-            <div class="relative w-full max-w-[520px]">
-              <div
-                id="lbViewport"
-                class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center touch-none"
-              >
-                <img
-                  id="lbImg"
-                  src=""
-                  alt="selected photo"
-                  class="max-h-full max-w-full object-contain select-none"
-                  draggable="false"
-                />
-              </div>
+      <!-- 큰 사진 영역 -->
+      <div class="flex-1 flex items-center justify-center">
+        <div class="relative w-full max-w-[520px]">
+          <div
+            id="lbViewport"
+            class="relative mx-auto h-[70dvh] w-full overflow-hidden rounded-2xl shadow-2xl flex items-center justify-center touch-none"
+          >
+            <img
+              id="lbImg"
+              src=""
+              alt="selected photo"
+              class="max-h-full max-w-full object-contain select-none"
+              draggable="false"
+            />
+          </div>
 
-                <!-- Prev/Next: 사진 가운데 높이에 위치 -->
-                <button
-                id="lbPrev"
-                type="button"
-                class="absolute left-2 sm:-left-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur
-                        opacity-80 hover:opacity-100 transition cursor-pointer"
-                aria-label="이전 사진"
-                >
-                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M15 18l-6-6 6-6" />
-                </svg>
-                </button>
+          <!-- Prev/Next -->
+          <button
+            id="lbPrev"
+            type="button"
+            class="absolute left-2 sm:-left-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur opacity-80 hover:opacity-100 transition cursor-pointer"
+            aria-label="이전 사진"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M15 18l-6-6 6-6" />
+            </svg>
+          </button>
 
-                <button
-                id="lbNext"
-                type="button"
-                class="absolute right-2 sm:-right-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur
-                        opacity-80 hover:opacity-100 transition cursor-pointer"
-                aria-label="다음 사진"
-                >
-                <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M9 18l6-6-6-6" />
-                </svg>
-                </button>
-            </div>
+          <button
+            id="lbNext"
+            type="button"
+            class="absolute right-2 sm:-right-10 top-1/2 -translate-y-1/2 z-20 grid h-9 w-9 place-items-center rounded-full bg-black/35 ring-1 ring-white/15 text-white backdrop-blur opacity-80 hover:opacity-100 transition cursor-pointer"
+            aria-label="다음 사진"
+          >
+            <svg viewBox="0 0 24 24" class="h-5 w-5" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M9 18l6-6-6-6" />
+            </svg>
+          </button>
         </div>
-
+      </div>
 
       <!-- 카운트 -->
       <p id="lbCount" class="mt-2 text-center text-xs text-white/70"></p>
@@ -109,34 +104,30 @@ const photos = [
       <!-- 썸네일 스트립 -->
       <div class="mt-3">
         <div class="mx-auto max-w-[520px] px-4">
-            <div
-                id="lbStrip"
-                class="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-smooth no-scrollbar"
-            >
-                {photos.map((src, i) => (
-                <button
-                    type="button"
-                    class="lb-thumb shrink-0 rounded-lg overflow-hidden ring-2 ring-transparent"
-                    data-thumb-index={i}
-                    aria-label={`썸네일 ${i + 1}`}
-                >
-                    <img
-                    src={src}
-                    alt={`thumb ${i + 1}`}
-                    class="h-14 w-14 object-cover opacity-70"
-                    loading="lazy"
-                    decoding="async"
-                    />
-                </button>
-                ))}
-            </div>
+          <div id="lbStrip" class="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-smooth no-scrollbar">
+            {photos.map((src, i) => (
+              <button
+                type="button"
+                class="lb-thumb shrink-0 rounded-lg overflow-hidden ring-2 ring-transparent"
+                data-thumb-index={i}
+                aria-label={`썸네일 ${i + 1}`}
+              >
+                <img
+                  src={src}
+                  alt={`thumb ${i + 1}`}
+                  class="h-14 w-14 object-cover opacity-70"
+                  loading="lazy"
+                  decoding="async"
+                  draggable="false"
+                />
+              </button>
+            ))}
+          </div>
         </div>
       </div>
     </div>
   </div>
 
-
-  <!-- define:vars로 photos를 JS로 넘김 -->
   <script is:inline define:vars={{ photos }}>
     const PHOTOS = photos;
 
@@ -181,8 +172,11 @@ const photos = [
     let lastTap = 0;
     let justZoomed = false;
 
-    // ✅ pinch-recent guard
-    let pinchedRecently = false;
+    // ✅ pinch cooldown (핀치 직후 더블탭 방지)
+    let pinchCooldownUntil = 0;
+    function markPinchCooldown(ms = 900) {
+      pinchCooldownUntil = Date.now() + ms;
+    }
 
     function clamp(n, a, b) {
       return Math.max(a, Math.min(b, n));
@@ -261,9 +255,7 @@ const photos = [
         return;
       }
 
-      const target =
-        activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
-
+      const target = activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
       const nextLeft = clamp(target, 0, max);
       strip.scrollTo({ left: nextLeft, behavior: "smooth" });
     }
@@ -357,8 +349,8 @@ const photos = [
     viewport.addEventListener(
       "touchend",
       (e) => {
-        // ✅ 핀치 직후 손 떼는 touchend는 더블탭 판정에서 제외 (요청사항 #1)
-        if (pinchedRecently) {
+        // ✅ 핀치 직후(또는 핀치 중) 들어오는 touchend는 더블탭 판정 금지
+        if (Date.now() < pinchCooldownUntil || isPinching || multiTouch) {
           lastTap = 0;
           return;
         }
@@ -400,9 +392,8 @@ const photos = [
         isPinching = true;
         isPanning = false;
 
-        // ✅ 핀치 직후 더블탭 판정 방지 플래그 ON
-        pinchedRecently = true;
-        setTimeout(() => (pinchedRecently = false), 300);
+        // ✅ 핀치 시작: 더블탭 판정 막기(핀치 끝날 때까지 + 종료 직후)
+        markPinchCooldown(900);
 
         const pts = Array.from(pointers.values());
         startDist = getDistance(pts[0], pts[1]);
@@ -434,6 +425,9 @@ const photos = [
       pointers.set(e.pointerId, { x: e.clientX, y: e.clientY });
 
       if (isPinching && pointers.size === 2) {
+        // ✅ 핀치 진행 중 계속 연장
+        markPinchCooldown(900);
+
         const pts = Array.from(pointers.values());
         const dist = getDistance(pts[0], pts[1]);
         const mid = getMid(pts[0], pts[1]);
@@ -472,6 +466,7 @@ const photos = [
       pointers.delete(e.pointerId);
 
       if (pointers.size < 2) {
+        if (isPinching) markPinchCooldown(900); // ✅ 핀치 종료 직후
         isPinching = false;
       }
       if (pointers.size === 0) {
@@ -513,7 +508,7 @@ const photos = [
     lb.addEventListener(
       "touchend",
       (e) => {
-        // ✅ 썸네일 스트립에서 끝나도 스와이프 금지 (요청사항 #2)
+        // ✅ 썸네일 스트립에서 끝나도 스와이프 금지
         if (e.target.closest("#lbStrip")) {
           startX = null;
           return;
@@ -550,6 +545,4 @@ const photos = [
       { passive: true }
     );
   </script>
-
-
 </section>
