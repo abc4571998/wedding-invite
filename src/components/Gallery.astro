@@ -110,7 +110,7 @@ const photos = [
       <!-- 썸네일 스트립 -->
       <div class="mt-3">
         <div class="mx-auto max-w-[520px] px-4">
-          <div id="lbStrip" class="mt-3 flex gap-2 overflow-x-auto pb-1 scroll-smooth no-scrollbar">
+          <div id="lbStrip" class="mt-3 flex gap-2 overflow-x-auto pt-1 pb-2 scroll-smooth no-scrollbar" style="scroll-padding-inline: 1rem; touch-action: pan-x;">
             {photos.map((src, i) => (
               <button
                 type="button"
@@ -156,6 +156,8 @@ const photos = [
     lbImg.setAttribute("draggable", "false");
 
     let current = 0;
+    let stripStartX = 0;
+    let stripStartY = 0;
 
     // ===== ✅ 페이지 줌 상태에 따라 “브라우저 줌” 허용/차단 모드 전환 =====
     function pageScale() {
@@ -280,42 +282,94 @@ const photos = [
       btnNext.classList.toggle("hidden", current === PHOTOS.length - 1);
     }
 
-    function highlightThumb() {
-      if (!strip) return;
+    // function highlightThumb() {
+    //   if (!strip) return;
 
-      thumbButtons.forEach((btn) => {
-        const img = btn.querySelector("img");
-        btn.classList.remove("ring-white");
-        btn.classList.add("ring-transparent");
-        img.classList.remove("opacity-100");
-        img.classList.add("opacity-70");
-      });
+    //   thumbButtons.forEach((btn) => {
+    //     const img = btn.querySelector("img");
+    //     btn.classList.remove("ring-white");
+    //     btn.classList.add("ring-transparent");
+    //     img.classList.remove("opacity-100");
+    //     img.classList.add("opacity-70");
+    //   });
 
-      const activeBtn = thumbButtons[current];
-      if (!activeBtn) return;
+    //   const activeBtn = thumbButtons[current];
+    //   if (!activeBtn) return;
 
-      const activeImg = activeBtn.querySelector("img");
-      activeBtn.classList.remove("ring-transparent");
-      activeBtn.classList.add("ring-white");
-      activeImg.classList.remove("opacity-70");
-      activeImg.classList.add("opacity-100");
+    //   const activeImg = activeBtn.querySelector("img");
+    //   activeBtn.classList.remove("ring-transparent");
+    //   activeBtn.classList.add("ring-white");
+    //   activeImg.classList.remove("opacity-70");
+    //   activeImg.classList.add("opacity-100");
 
-      const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+    //   const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
 
-      if (current === 0) {
-        strip.scrollTo({ left: 0, behavior: "smooth" });
-        return;
-      }
-      if (current === PHOTOS.length - 1) {
-        strip.scrollTo({ left: max, behavior: "smooth" });
-        return;
-      }
+    //   if (current === 0) {
+    //     strip.scrollTo({ left: 0, behavior: "smooth" });
+    //     return;
+    //   }
+    //   if (current === PHOTOS.length - 1) {
+    //     strip.scrollTo({ left: max, behavior: "smooth" });
+    //     return;
+    //   }
 
-      const target = activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
-      const nextLeft = clamp(target, 0, max);
-      strip.scrollTo({ left: nextLeft, behavior: "smooth" });
-    }
+    //   const target = activeBtn.offsetLeft + activeBtn.offsetWidth / 2 - strip.clientWidth / 2;
+    //   const nextLeft = clamp(target, 0, max);
+    //   strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+    // }
 
+    function scrollThumbIntoView(activeBtn) {
+  if (!strip || !activeBtn) return;
+
+  // 1차: 브라우저 기본 정렬 사용
+  try {
+    activeBtn.scrollIntoView({
+      behavior: "smooth",
+      inline: "center",
+      block: "nearest",
+    });
+    return;
+  } catch (_) {
+    // 일부 브라우저/환경 폴백
+  }
+
+  // 2차 폴백: getBoundingClientRect 기반 수동 계산
+  const stripRect = strip.getBoundingClientRect();
+  const btnRect = activeBtn.getBoundingClientRect();
+
+  const delta =
+    btnRect.left - stripRect.left - (strip.clientWidth / 2 - btnRect.width / 2);
+
+  const max = Math.max(0, strip.scrollWidth - strip.clientWidth);
+  const nextLeft = clamp(strip.scrollLeft + delta, 0, max);
+
+  strip.scrollTo({ left: nextLeft, behavior: "smooth" });
+}
+
+function highlightThumb() {
+    if (!strip) return;
+
+    thumbButtons.forEach((btn) => {
+      const img = btn.querySelector("img");
+      btn.classList.remove("ring-white");
+      btn.classList.add("ring-transparent");
+      img.classList.remove("opacity-100");
+      img.classList.add("opacity-70");
+    });
+
+    const activeBtn = thumbButtons[current];
+    if (!activeBtn) return;
+
+    const activeImg = activeBtn.querySelector("img");
+    activeBtn.classList.remove("ring-transparent");
+    activeBtn.classList.add("ring-white");
+    activeImg.classList.remove("opacity-70");
+    activeImg.classList.add("opacity-100");
+
+    requestAnimationFrame(() => {
+      scrollThumbIntoView(activeBtn);
+    });
+  }
     function render() {
       lbImg.onload = () => {
         measureBase();
@@ -329,6 +383,19 @@ const photos = [
       updateNavButtons();
     }
 
+    // function openAt(index) {
+    //   current = index;
+
+    //   lb.classList.remove("hidden");
+    //   lb.classList.add("block");
+    //   lb.setAttribute("aria-hidden", "false");
+    //   document.body.style.overflow = "hidden";
+
+    //   syncInteractionMode();
+
+    //   render();
+    //   setTimeout(render, 0);
+   // }
     function openAt(index) {
       current = index;
 
@@ -338,11 +405,9 @@ const photos = [
       document.body.style.overflow = "hidden";
 
       syncInteractionMode();
-
       render();
-      setTimeout(render, 0);
     }
-
+    
     function close() {
       lb.classList.add("hidden");
       lb.classList.remove("block");
@@ -540,6 +605,7 @@ const photos = [
     lb.addEventListener(
       "touchstart",
       (e) => {
+        const strip = document.getElementById("lbStrip");
         if (e.target.closest("#lbStrip")) {
           startX = null;
           return;
